@@ -144,12 +144,16 @@ def explain_false_negatives(
           most-negative contribution. Take the top few of each.
 
     Returns:
-        A list with one entry per selected false negative. Each entry is
-        a dictionary that names the row index, carries the per-feature
-        SHAP values, lists the top positive contributors with their SHAP
-        values, lists the top negative contributors with their SHAP
-        values, and reports the sum of the positive and negative
-        contributions separately so the auditor can see how the
-        contributions netted out.
+        A list with one entry per selected false negative. Each entry is a
+        dict with these keys (the audit notebook reads them by name):
+            - "instance_index": int row index of the false negative
+            - "shap_values": the per-feature SHAP values for that row
+            - "top_positive_features": list of (feature_name, shap_value)
+              tuples for the strongest positive contributors
+            - "top_negative_features": list of (feature_name, shap_value)
+              tuples for the strongest negative contributors
+            - "sum_shap_positive" / "sum_shap_negative": the summed positive
+              and negative contributions, so the auditor can see how they
+              netted out.
     """
     raise NotImplementedError("Implement explain_false_negatives")

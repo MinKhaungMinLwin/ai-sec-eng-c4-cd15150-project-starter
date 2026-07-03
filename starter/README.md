@@ -68,12 +68,12 @@ starter/
 | Tab | Source | What you produce |
 |---|---|---|
 | 00 Cover | — | (no work needed) |
-| 01 D1 EU AI Act | [HAND] | Risk-tier classification + ≥6 obligations gap analysis |
+| 01 D1 EU AI Act | [HAND] | Risk-tier classification + all 11 Article 9–15 obligation rows |
 | 02 D2 DFD Compliance | [HAND] | Annotate `data/data_flow_diagram.png`, build the obligation table |
 | 03 D3 ATLAS | [HAND] | 3 well-analyzed TTPs |
-| 04 D4 Technical Audit | [CODE] | Notebook writes performance, subgroup tables, proxy hypothesis |
-| 05 D5 Risk Register | [HAND + CODE] | Notebook seeds 3–4 risks; you add the rest |
-| 06 D6 Model Card | [HAND + CODE] | Notebook fills Performance & Subgroup; you write the rest |
+| 04 D4 Technical Audit | [CODE] | Notebook writes performance + subgroup tables; you write the Proxy-Bias Hypothesis |
+| 05 D5 Risk Register | [HAND] | You author all rows; draw 3-4 directly from your D4 findings |
+| 06 D6 Model Card | [HAND] | You transcribe Performance & Subgroup from D4; you write the rest |
 | 07 D7 KRI Dashboard | [CODE] | Notebook calls your `kri.py` to populate Status |
 | 08 D8 Launch Decision | [HAND] | 1-page exec brief + detailed justification + RACI sign-off |
 

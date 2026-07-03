@@ -114,7 +114,7 @@ This section is where the supply-chain story lives. You will reference it in the
 **Training data.**
 - Source 1 — anonymized EHR extracts from two of Klariova Health's existing customer hospitals (Ireland, Germany), licensed under the data-processing agreement with explicit opt-in for secondary use in model development.
 - Source 2 — a synthetic dataset generated to balance demographic representation, in particular to ensure adequate sample sizes for non-majority geographic regions (rural and suburban). The synthetic data was produced by an internal data-engineering team using a generative model trained on the Source 1 data.
-- Total training set: approximately 8,000 patient records.
+- Total training set: approximately 12,000 patient records.
 
 **Known training-data limitations.**
 - The synthetic-data generator (Source 2) was trained on data that itself reflects historical care-access disparities — patients from under-served populations are known to be diagnosed at lower rates because they receive fewer encounters with primary care. Any pattern present in Source 1 — including under-diagnosis — is reproduced in Source 2.
