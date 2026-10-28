@@ -17,9 +17,24 @@ import pandas as pd
 import shap
 
 
+def _dense(X):
+    """Return a dense ndarray (one-hot encoders may emit sparse matrices)."""
+    return X.toarray() if hasattr(X, "toarray") else np.asarray(X)
+
+
+def _positive_class(shap_values) -> np.ndarray:
+    """Normalize SHAP output to a 2-D (n_samples, n_features) array for class 1."""
+    if isinstance(shap_values, list):
+        shap_values = shap_values[-1]
+    values = np.asarray(shap_values)
+    if values.ndim == 3:
+        values = values[:, :, -1]
+    return values
+
+
 def setup_explainer(pipeline, X_background: pd.DataFrame):
     """
-    TODO: Initialize a SHAP explainer for the trained scikit-learn pipeline.
+    Initialize a SHAP explainer for the trained scikit-learn pipeline.
 
     What the pipeline contains. The trained model that ships with the
     project is a scikit-learn pipeline with two named steps: a
@@ -56,7 +71,15 @@ def setup_explainer(pipeline, X_background: pd.DataFrame):
     compute SHAP values for the test set, push the test set through the
     same preprocessing step yourself in the notebook.
     """
-    raise NotImplementedError("Implement setup_explainer")
+    preprocessor = pipeline.named_steps["preprocessor"]
+    classifier = pipeline.named_steps["classifier"]
+
+    X_bg_t = _dense(preprocessor.transform(X_background))
+    feature_names = [str(f) for f in preprocessor.get_feature_names_out()]
+
+    explainer = shap.TreeExplainer(
+        classifier, feature_perturbation="tree_path_dependent")
+    return explainer, X_bg_t, feature_names
 
 
 def detect_proxy_features(
@@ -66,7 +89,7 @@ def detect_proxy_features(
     top_k: int = 8,
 ) -> pd.DataFrame:
     """
-    TODO: Identify candidate proxy features and return a ranked table.
+    Identify candidate proxy features and return a ranked table.
 
     What is a proxy feature? A non-protected feature that:
         (1) the model relies on heavily — it has a large average absolute
@@ -110,7 +133,30 @@ def detect_proxy_features(
         importance, its average signed effect, its signed-strength score,
         and its rank.
     """
-    raise NotImplementedError("Implement detect_proxy_features")
+    values = _positive_class(shap_values)
+    if values.shape[1] != len(feature_names):
+        raise ValueError("shap_values columns do not match feature_names")
+
+    mean_abs = np.abs(values).mean(axis=0)
+    mean_signed = values.mean(axis=0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        signed_strength = np.where(mean_abs > 0, np.abs(mean_signed) / mean_abs, 0.0)
+
+    table = pd.DataFrame({
+        "feature": list(feature_names),
+        "mean_abs_shap": mean_abs,
+        "mean_shap": mean_signed,
+        "signed_strength": signed_strength,
+    })
+    protected = [p.lower() for p in protected_feature_substrings]
+    is_protected = table["feature"].str.lower().apply(
+        lambda name: any(p in name for p in protected))
+    table = (table[~is_protected]
+             .sort_values("mean_abs_shap", ascending=False)
+             .head(top_k)
+             .reset_index(drop=True))
+    table["rank"] = np.arange(1, len(table) + 1)
+    return table
 
 
 def explain_false_negatives(
@@ -123,7 +169,7 @@ def explain_false_negatives(
     n_examples: int = 3,
 ) -> List[dict]:
     """
-    TODO: For up to n_examples false negatives matching the mask, return
+    For up to n_examples false negatives matching the mask, return
     their top contributing features (positive AND negative) with SHAP values.
 
     Why this matters. A global SHAP summary tells you the population-level
@@ -156,4 +202,30 @@ def explain_false_negatives(
               and negative contributions, so the auditor can see how they
               netted out.
     """
-    raise NotImplementedError("Implement explain_false_negatives")
+    top_n = 5
+    y_true = np.asarray(y_true).astype(int)
+    y_pred = np.asarray(y_pred).astype(int)
+    mask = np.asarray(mask, dtype=bool)
+
+    fn_idx = np.flatnonzero((y_true == 1) & (y_pred == 0) & mask)[:n_examples]
+    if fn_idx.size == 0:
+        return []
+
+    X_sel = _dense(X_transformed[fn_idx])
+    values = _positive_class(explainer.shap_values(X_sel))
+    names = np.asarray(feature_names)
+
+    examples = []
+    for row_idx, sv in zip(fn_idx, values):
+        order = np.argsort(sv)
+        pos = [(str(names[j]), float(sv[j])) for j in order[::-1][:top_n] if sv[j] > 0]
+        neg = [(str(names[j]), float(sv[j])) for j in order[:top_n] if sv[j] < 0]
+        examples.append({
+            "instance_index": int(row_idx),
+            "shap_values": sv,
+            "top_positive_features": pos,
+            "top_negative_features": neg,
+            "sum_shap_positive": float(sv[sv > 0].sum()),
+            "sum_shap_negative": float(sv[sv < 0].sum()),
+        })
+    return examples

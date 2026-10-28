@@ -1,0 +1,43 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0 -- /Users/mkml/Documents/work/Udacity/ai-sec-eng-c4-cd15150-project-starter/starter/../.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mkml/Documents/work/Udacity/ai-sec-eng-c4-cd15150-project-starter/starter
+plugins: platformdirs-4.13.6, anyio-4.15.1
+collecting ... collected 34 items
+
+lab/tests/test_audit.py::test_subgroup_returns_dataframe_with_expected_columns PASSED [  2%]
+lab/tests/test_audit.py::test_subgroup_has_one_row_per_group PASSED      [  5%]
+lab/tests/test_audit.py::test_subgroup_intersectional_uses_multiindex PASSED [  8%]
+lab/tests/test_audit.py::test_subgroup_metrics_arithmetic_for_one_cell PASSED [ 11%]
+lab/tests/test_audit.py::test_find_most_harmed_returns_none_when_filter_excludes_all PASSED [ 14%]
+lab/tests/test_audit.py::test_find_most_harmed_returns_correct_group PASSED [ 17%]
+lab/tests/test_audit.py::test_find_most_harmed_filters_low_n PASSED      [ 20%]
+lab/tests/test_audit.py::test_proxy_supported_when_within_gap_exceeds_reference PASSED [ 23%]
+lab/tests/test_audit.py::test_proxy_inconclusive_when_cell_missing PASSED [ 26%]
+lab/tests/test_fairness_metrics.py::test_fnr_perfect_recall_is_zero PASSED [ 29%]
+lab/tests/test_fairness_metrics.py::test_fnr_no_positives_returns_nan PASSED [ 32%]
+lab/tests/test_fairness_metrics.py::test_fnr_basic_arithmetic PASSED     [ 35%]
+lab/tests/test_fairness_metrics.py::test_fpr_no_negatives_returns_nan PASSED [ 38%]
+lab/tests/test_fairness_metrics.py::test_fpr_basic_arithmetic PASSED     [ 41%]
+lab/tests/test_fairness_metrics.py::test_selection_rate_basic PASSED     [ 44%]
+lab/tests/test_fairness_metrics.py::test_dpd_finds_max_min_groups PASSED [ 47%]
+lab/tests/test_fairness_metrics.py::test_dpd_with_clear_disparity PASSED [ 50%]
+lab/tests/test_fairness_metrics.py::test_eod_returns_dict_shape PASSED   [ 52%]
+lab/tests/test_fairness_metrics.py::test_eod_picks_larger_of_fnr_or_fpr_diff PASSED [ 55%]
+lab/tests/test_kri.py::test_override_green PASSED                        [ 58%]
+lab/tests/test_kri.py::test_override_amber_via_rate_band PASSED          [ 61%]
+lab/tests/test_kri.py::test_override_amber_via_structured_share_band PASSED [ 64%]
+lab/tests/test_kri.py::test_override_red_via_rate_breach PASSED          [ 67%]
+lab/tests/test_kri.py::test_override_red_via_structured_share_breach PASSED [ 70%]
+lab/tests/test_kri.py::test_anomaly_green_below_one_per_thousand PASSED  [ 73%]
+lab/tests/test_kri.py::test_anomaly_amber_in_band PASSED                 [ 76%]
+lab/tests/test_kri.py::test_anomaly_red_above_threshold PASSED           [ 79%]
+lab/tests/test_kri.py::test_anomaly_zero_inferences_is_insufficient PASSED [ 82%]
+lab/tests/test_kri.py::test_fnr_drift_green_when_gap_small PASSED        [ 85%]
+lab/tests/test_kri.py::test_fnr_drift_red_when_gap_large PASSED          [ 88%]
+lab/tests/test_shap_analysis.py::test_detect_excludes_protected_features PASSED [ 91%]
+lab/tests/test_shap_analysis.py::test_detect_returns_top_k PASSED        [ 94%]
+lab/tests/test_shap_analysis.py::test_detect_signed_strength_bounds PASSED [ 97%]
+lab/tests/test_shap_analysis.py::test_detect_dataframe_columns PASSED    [100%]
+
+============================== 34 passed in 1.57s ==============================

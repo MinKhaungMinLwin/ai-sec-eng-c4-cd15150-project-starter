@@ -28,7 +28,7 @@ def kri_subgroup_fnr_drift(
     min_n_positives: int = 20,
 ) -> dict:
     """
-    TODO: Implement the KRI defined as KRI-1 in your D7 dashboard tab.
+    Implement the KRI defined as KRI-1 in your D7 dashboard tab.
 
     Conceptual definition (from D7).
         Look across the intersectional cells of the audit population — for
@@ -62,7 +62,49 @@ def kri_subgroup_fnr_drift(
         rate, the cell label with the best false-negative rate, the count
         of qualifying cells, and a short note string.
     """
-    raise NotImplementedError("Implement kri_subgroup_fnr_drift")
+    cells = compute_subgroup_metrics(y_true, y_pred, sensitive_features)
+    qualifying = cells[(cells["n_positives"] >= min_n_positives) & cells["FNR"].notna()]
+    result = {
+        "kri_id": "KRI-1",
+        "kri_name": "Subgroup FNR Drift",
+        "status": "Insufficient",
+        "gap_pp": None,
+        "worst_cell": None,
+        "worst_fnr": None,
+        "best_cell": None,
+        "best_fnr": None,
+        "n_qualifying_cells": int(len(qualifying)),
+        "min_n_positives": int(min_n_positives),
+        "note": "",
+    }
+    if len(qualifying) < 2:
+        result["note"] = (
+            f"Only {len(qualifying)} of {len(cells)} cells have >= {min_n_positives} "
+            "positives; FNR gap undefined for this window.")
+        return result
+
+    worst, best = qualifying["FNR"].idxmax(), qualifying["FNR"].idxmin()
+    gap_pp = 100.0 * (qualifying.loc[worst, "FNR"] - qualifying.loc[best, "FNR"])
+    if gap_pp <= 8:
+        status = "Green"
+    elif gap_pp <= 15:
+        status = "Amber"
+    else:
+        status = "Red"
+    result.update({
+        "status": status,
+        "gap_pp": round(float(gap_pp), 1),
+        "worst_cell": worst,
+        "worst_fnr": float(qualifying.loc[worst, "FNR"]),
+        "best_cell": best,
+        "best_fnr": float(qualifying.loc[best, "FNR"]),
+        "note": (
+            f"Worst {worst} FNR={qualifying.loc[worst, 'FNR']:.3f} vs best {best} "
+            f"FNR={qualifying.loc[best, 'FNR']:.3f}; gap {gap_pp:.1f} pp across "
+            f"{len(qualifying)} cells with n_pos >= {min_n_positives} "
+            "(Green <= 8, Amber 8-15, Red > 15)."),
+    })
+    return result
 
 
 def kri_override_health(
@@ -70,7 +112,7 @@ def kri_override_health(
     structured_share: float,
 ) -> dict:
     """
-    TODO: Implement the KRI defined as KRI-2 in your D7 dashboard tab.
+    Implement the KRI defined as KRI-2 in your D7 dashboard tab.
 
     Conceptual definition. This is a dual-criterion KRI. Two inputs:
         - the share of inferences where a clinician recorded an override,
@@ -100,7 +142,33 @@ def kri_override_health(
         condition triggered the status (so the dashboard can show why the
         KRI changed color).
     """
-    raise NotImplementedError("Implement kri_override_health")
+    rate_red = override_rate > 0.15
+    share_red = structured_share < 0.60
+    rate_amber = override_rate > 0.10
+    share_amber = structured_share < 0.80
+
+    if rate_red or share_red:
+        status = "Red"
+        triggers = [t for t, hit in [
+            (f"override rate {override_rate:.1%} > 15%", rate_red),
+            (f"structured share {structured_share:.1%} < 60%", share_red)] if hit]
+    elif rate_amber or share_amber:
+        status = "Amber"
+        triggers = [t for t, hit in [
+            (f"override rate {override_rate:.1%} in (10%, 15%]", rate_amber),
+            (f"structured share {structured_share:.1%} in [60%, 80%)", share_amber)] if hit]
+    else:
+        status = "Green"
+        triggers = [f"override rate {override_rate:.1%} <= 10% and "
+                    f"structured share {structured_share:.1%} >= 80%"]
+    return {
+        "kri_id": "KRI-2",
+        "kri_name": "Override Channel Health",
+        "status": status,
+        "override_rate": float(override_rate),
+        "structured_share": float(structured_share),
+        "reason": "; ".join(triggers),
+    }
 
 
 def kri_inference_anomaly(
@@ -108,7 +176,7 @@ def kri_inference_anomaly(
     total_inferences: int,
 ) -> dict:
     """
-    TODO: Implement the KRI defined as KRI-3 in your D7 dashboard tab.
+    Implement the KRI defined as KRI-3 in your D7 dashboard tab.
 
     Conceptual definition. Convert the count of anomalous inferences into
     an anomaly rate per one thousand inferences, and apply a Green / Amber
@@ -126,4 +194,30 @@ def kri_inference_anomaly(
         per one thousand inferences, the raw counts echoed back, and a
         short note describing the rate in plain language.
     """
-    raise NotImplementedError("Implement kri_inference_anomaly")
+    result = {
+        "kri_id": "KRI-3",
+        "kri_name": "Inference Anomaly Rate",
+        "status": "Insufficient",
+        "per_1000": None,
+        "anomaly_count": int(anomaly_count),
+        "total_inferences": int(total_inferences),
+        "note": "",
+    }
+    if total_inferences <= 0:
+        result["note"] = "No inferences in the window; anomaly rate undefined."
+        return result
+
+    per_1000 = 1000.0 * anomaly_count / total_inferences
+    if per_1000 < 1:
+        status = "Green"
+    elif per_1000 <= 5:
+        status = "Amber"
+    else:
+        status = "Red"
+    result.update({
+        "status": status,
+        "per_1000": round(per_1000, 2),
+        "note": (f"{anomaly_count} anomalous of {total_inferences:,} inferences = "
+                 f"{per_1000:.2f} per 1,000 (Green < 1, Amber 1-5, Red > 5)."),
+    })
+    return result
